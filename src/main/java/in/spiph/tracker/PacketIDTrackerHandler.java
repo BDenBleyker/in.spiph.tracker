@@ -13,6 +13,8 @@ import static in.spiph.tracker.Tracker.idToIp;
 import static in.spiph.tracker.Tracker.putIp;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelPipeline;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -28,7 +30,7 @@ public class PacketIDTrackerHandler extends PacketHandler {
     @Override
     public boolean handleException(Throwable cause) {
         if (cause.getMessage().equals("An existing connection was forcibly closed by the remote host")) {
-            System.out.println("\n\tServer disconnected");
+            Logger.getLogger(Tracker.class.getName()).log(Level.INFO, "\n\tServer disconnected");
         } else {
             return false;
         }
@@ -38,16 +40,16 @@ public class PacketIDTrackerHandler extends PacketHandler {
     @Override
     public void handlePacket(ChannelPipeline pipeline, APacket packet) {
         switch (packet.getType()) {
-            case 0: // TestPacket
+            case TestPacket.TYPE_VALUE:
                 switch (packet.getData().toString()) {
                     case "Request":
                         pipeline.fireUserEventTriggered(new TestPacket("Hello!"));
                         break;
                     default:
-                        System.out.println("Test Succeeds");
+                        Logger.getLogger(Tracker.class.getName()).log(Level.INFO, "Test Succeeds");
                 }
                 break;
-            case 1: // IpPacket
+            case IpPacket.TYPE_VALUE:
                 String[] dataSplit = packet.getData().toString().split(";");
                 if (dataSplit[1].equals("?")) {
                     pipeline.fireUserEventTriggered(new IpPacket(dataSplit[0], idToIp(dataSplit[0])));
@@ -56,7 +58,7 @@ public class PacketIDTrackerHandler extends PacketHandler {
                 }
                 break;
             default: // ErrorPacket
-                System.out.println("Invalid packet id (" + packet.getType() + "): " + packet.toString());
+                Logger.getLogger(Tracker.class.getName()).log(Level.WARNING, "Invalid packet id ({0}): {1}", new Object[]{packet.getType(), packet.toString()});
         }
     }
 
